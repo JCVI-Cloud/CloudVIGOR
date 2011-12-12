@@ -1,0 +1,22 @@
+#
+# .gitignore
+#
+
+syntax:glob
+
+.nfs*
+*~
+.*.swp
+.DS_Store
+.svn
+svn-commit*.tmp
+.hg
+tmp*
+*.tmp
+*.log
+*.class
+*.pyc
+build/*
+old/*
+*.komodoproject
+
