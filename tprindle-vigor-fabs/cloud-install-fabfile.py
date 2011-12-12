@@ -1,160 +1,341 @@
 #
-# fabfile.py
-# 20111005 tprindle
+# cloud-install-fabfile.py
 #
 
 #
+# TODO - diff remote test output files to local test output files
+# TODO - finish run_tests
+# TODO - finish validate_tests
 # TODO - why doesn't clustalw work?
+# TODO - fix timezone
 #
 
 import os.path
-
-USER = "ubuntu"
-HOME = os.path.join("/home", USER)
-
-SCRATCH_DIR = "/usr/local/scratch"
-VIGOR_SCRATCH_DIR = os.path.join(SCRATCH_DIR, "VIRAL/VIGOR")
-TEMPSPACE_DIR = os.path.join(VIGOR_SCRATCH_DIR, "tempspace")
-
-ROOT_DIR = "/usr/local"
-TOOLS_DIR = os.path.join(ROOT_DIR, "tools")
-VIGOR_DIR = os.path.join(ROOT_DIR, "devel/ANNOTATION/VIRAL/VIGOR")
-
-#BUILD_DIR = os.path.join(HOME, "_BUILD")
-EXE_DIR = "/usr/local/bin"
-
-AMAZONS3_URL = "https://s3.amazonaws.com/VIGOR"
-
-CLUSTALW_NAME = "clustalw-1.83"
-CLUSTALW_TAR_FILENAME = "%s.tgz" % CLUSTALW_NAME
-CLUSTALW_URL = os.path.join(AMAZONS3_URL, CLUSTALW_TAR_FILENAME)
-CLUSTALW_DIR = os.path.join(TOOLS_DIR, "clustalw")
-
-BLAST_NAME = "blast-2.2.15"
-BLAST_TAR_FILENAME = "%s-x64-linux.tar.gz" % BLAST_NAME
-BLAST_URL = os.path.join("%s/%s" % (AMAZONS3_URL, BLAST_TAR_FILENAME))
-BLAST_DIR = os.path.join(TOOLS_DIR, "blast")
-
-VIGOR_SVN_TAG = "GSCcloud-release-20111129"
-SVN_USER = "tprindle"
-SVN_URL = "http://svn.jcvi.org/ANNOTATION/vigor/tags/%s" % VIGOR_SVN_TAG
-
-CONFIG =
-
-####
-
-import urllib
 from fabric.api import cd, env, local, put, run, sudo, task
 from fabric.network import disconnect_all
 
-@task(default=True)
+@task
 def install():
     try:
-        _initialize()
+        _initialize_script()
+        _initialize_host()
+        _install_tools()
         _install_vigor()
     finally:
         disconnect_all()
 
-def _initialize():
-    env.user = USER
-    print("User[%s]" % env.user)
-    print("Host[%s]" % env.host)
-    result = local("ssh-keygen -R %s" % env.host)
-    result = run("mkdir -p %s" % os.path.join(HOME, ".subversion"))
-    result = run("rm -f %s" % os.path.join(HOME, ".subversion/config"))
-    result = put("../upload/subversion-config", ".subversion/config", mode=0400)
-    _fix_etc_hosts()
-    #_set_timezone()
-    _update_aptget()
-    #_install_build_tools()
+@task
+def clean_all():
+    try:
+        _initialize_script()
+        _remove_vigor()
+        _remove_tools()
+        if _path_exists(env.ROOT_DIR):
+            run("rmdir %(ROOT_DIR)s" % env)
+    finally:
+        disconnect_all()
 
-def _install_vigor():
-    _create_tools_dir()
-    _install_blast()
-    _install_clustalw()
-    _install_subversion()
-    _create_scratch_dir()
-    _create_vigor_dir()
-    #_create_reference_db_dir()
-    result = sudo("chown -R root:root %s" % TOOLS_DIR)
-    result = sudo("find %s -type d -exec chmod -R 755 {} \;" % ROOT_DIR)
-    with cd(VIGOR_DIR):
-        #result = run("svn --username=tprindle checkout http://svn.jcvi.org/ANNOTATION/vigor/new .")
-        result = run("svn --username=%s export %s ." % ( SVN_USER, SVN_URL))
+@task(default=True)
+def help():
+    print """
+    Targets:
+        install         - Initializes the VM, creates appropriate resources,
+                            and installs VIGOR pipeline.
+
+        clean_all       - Removes this VIGOR installation and all related
+                            resources. (Does not return the VM to
+                            pre-initialization state.)
+
+        run_tests       - Runs tests using the VIGOR pipeline and sample data.
+
+        validate_tests  - Compares the test output from these tests to a
+                            curated copy of the test output.
+        \n"""
+
+# TODO - finish run_tests
+@task
+def run_tests():
+    try:
+        _initialize_script()
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Adenovirus.pm \
+                -x %(VIGOR_REPOS_DIR)s/conf/hadv_FJ349096.cfg \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Adenovirus/34615.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/34615""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Coronavirus.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_35931.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Coronavirus.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32276.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Coronavirus.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32265.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Flu.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Flu/FluB.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/FluB""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Rhinovirus.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Rhinovirus/Rhinovirus_genomes.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -l %(VIGOR_REPOS_DIR)s/Rotavirus.pm \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Rotavirus/rotaV_10_22_genome.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+        cmd = ("""%(VIGOR_REPOS_DIR)s/VIGOR.pl \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/YellowFeverV/YFV_genome.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
+
+    finally:
+        disconnect_all()
+
+# TODO - finish validate_tests
+@task
+def validate_tests():
+    print "Not yet implemented."
 
 def _create_scratch_dir():
-    result = sudo("mkdir -p %s" % TEMPSPACE_DIR)
-    result = sudo("chown -R %s:%s %s" % (USER, USER, VIGOR_SCRATCH_DIR))
-    result = sudo("find %s -type d -exec chmod -R 755 {} \;" % VIGOR_SCRATCH_DIR)
+    sudo("mkdir -p %(VIGOR_SCRATCH_DIR)s" % env)
+    sudo("chown -R %(REMOTE_LINUX_USER)s:%(REMOTE_LINUX_USER)s %(VIGOR_SCRATCH_DIR)s" % env)
+    sudo("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod -R 755 {} \;" % env)
 
 def _create_tools_dir():
-    result = sudo("mkdir -p %s" % TOOLS_DIR)
-    result = sudo("chown -R ubuntu:ubuntu %s" % TOOLS_DIR)
-    #result = sudo("find %s -type d -exec chmod -R 755 {} \;" % ROOT_DIR)
+    sudo("mkdir -p %(TOOLS_DIR)s" % env)
+    sudo("chown -R ubuntu:ubuntu %(TOOLS_DIR)s" % env)
 
-def _create_vigor_dir():
-    result = sudo("mkdir -p %s" % VIGOR_DIR)
-    result = sudo("chown -R ubuntu:ubuntu %s" % VIGOR_DIR)
-    #result = sudo("find %s -type d -exec chmod -R 755 {} \;" % ROOT_DIR)
+#def _create_vigor_dir():
+#    sudo("mkdir -p %s" % env.VIGOR_DIR)
+#    sudo("chown -R ubuntu:ubuntu %s" % env.VIGOR_DIR)
+#    #sudo("find %s -type d -exec chmod -R 755 {} \;" % env.ROOT_DIR)
 
-def _exists(filespec):
-    with settings(warn_only=True):
-        return run("test -e %s" % filespec)
+def _create_vigor_scratch_dir():
+    if not _path_exists(env.VIGOR_SCRATCH_DIR):
+        run("mkdir -p %(VIGOR_SCRATCH_DIR)s" % env)
+    if not _path_exists(env.VIGOR_TEST_OUTPUT_DIR):
+        run("mkdir -p %(VIGOR_TEST_OUTPUT_DIR)s" % env)
+    run("find %(VIGOR_SCRATCH_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+    run("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+
+def _create_vigor_tempspace_dir():
+    sudo("mkdir -p %(VIGOR_TEMPSPACE_DIR)s" % env)
+    sudo("chown -R %(REMOTE_LINUX_USER)s:%(REMOTE_LINUX_USER)s %(VIGOR_TEMPSPACE_DIR)s" % env)
+    sudo("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+
+def _file_contains(filespec, phrase):
+    found = False
+    result = run("grep '%s' %s" % (phrase, filespec))
+    if length(result) > 0: found = True
+    return found
 
 def _fix_etc_hosts():
     internal_ip = run("hostname")
     print("internal_ip[%s]" % internal_ip)
-    result = sudo("echo '' >> /etc/hosts")
-    result = sudo("echo '127.0.0.1 %s' >> /etc/hosts" % internal_ip)
-    #result = sudo("echo '%s %s' >> /etc/hosts" % (env.host, internal_ip))
-    result = sudo("echo '' >> /etc/hosts")
+    filespec = "/etc/hosts"
+    if not _file_contains(filespec, internal_ip):
+        sudo("echo '127.0.0.1 %s' >> %s" % (internal_ip, filespec))
+
+def _initialize_host():
+    local("ssh-keygen -R %(host)s" % env)
+    _fix_etc_hosts()
+    _set_timezone()
+    _update_aptget()
+    #_install_build_tools()
+    _create_scratch_dir()
+    run("mkdir -p %s" % os.path.join(HOME, ".subversion"))
+    run("rm -f %s" % os.path.join(HOME, ".subversion/config"))
+    put("../upload/subversion-config", ".subversion/config", mode=0400)
+
+def _initialize_script():
+    print("User[%(user)s] (local)" % env)
+    print("Host[%(host)s]" % env)
+    print("Remote Linux User[%(REMOTE_LINUX_USER)s]" % env)
+    print("VIGOR_REPOS_TAG[%(VIGOR_REPOS_TAG)s]" % env)
+    print("ROOT_DIR[%(ROOT_DIR)s]" % env)
+    print("SCRATCH_DIR[%(SCRATCH_DIR)s]" % env)
+    env.HOME = os.path.join("/home", env.REMOTE_LINUX_USER)
+    env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor-scratch")
+    env.VIGOR_TEMPSPACE_DIR = "/usr/local/scratch/VIRAL/VIGOR/tempspace"
+    env.VIGOR_REPOS_DIR = os.path.join(env.ROOT_DIR, "VIGOR-REPOS")
+    env.VIGOR_SAMPLE_DATA_URL = ("%(AMAZONS3_URL)/%(VIGOR_SAMPLE_DATA_TAR_FILENAME)s" % env)
+    env.VIGOR_SAMPLE_DATA_DIR =  os.path.join(env.VIGOR_SCRATCH_DIR,
+                                              "sample-data")
+    env.VIGOR_TEST_OUTPUT_DIR =  os.path.join(env.VIGOR_SCRATCH_DIR,
+                                              "test-output")
+    env.TOOLS_DIR = os.path.join(env.ROOT_DIR, "tools")
+    env.BLAST_DIR = os.path.join(env.TOOLS_DIR, "blast")
+    env.CLUSTALW_DIR = os.path.join(env.TOOLS_DIR, "clustalw")
+    #env.VIGOR_DIR = os.path.join(env.ROOT_DIR, "devel/ANNOTATION/VIRAL/VIGOR")
+    env.EXE_DIR = "/usr/local/bin"
+    env.BLAST_TAR_FILENAME = "%(BLAST_NAME)s-x64-linux.tar.gz" % env
+    env.BLAST_URL = ("%(AMAZONS3_URL)s/%(BLAST_TAR_FILENAME)s" % env)
+    env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s.tgz" % env
+    env.CLUSTALW_URL = ("%(AMAZONS3_URL)s/%(CLUSTALW_TAR_FILENAME)s" % env)
+    env.REPOS_URL = ("http://svn.jcvi.org/ANNOTATION/vigor/tags/%(VIGOR_REPOS_TAG)s" % env)
 
 def _install_blast():
-    # TODO - ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/2.2.15/
-    #result = sudo("apt-get -y install blast2")
-    result = sudo("mkdir -p %s" % BLAST_DIR)
-    result = sudo("chown ubuntu:ubuntu %s" % BLAST_DIR)
-    with cd(BLAST_DIR):
-        result = sudo(("wget --no-host-directories --cut-dirs=1 "
-                      + "--directory-prefix=%s %s")
-                      % (BLAST_DIR, BLAST_URL))
-        result = sudo("tar xvfz %s" % BLAST_TAR_FILENAME)
-    result = sudo("find %s -type d -exec chmod -R 755 {} \;" % BLAST_DIR)
-    result = sudo("ln -s %s/bin/* %s"
-                  % (os.path.join(BLAST_DIR, BLAST_NAME), EXE_DIR))
+    sudo("mkdir -p %(BLAST_DIR)s" % env)
+    sudo("chown ubuntu:ubuntu %(BLAST_DIR)s" % env)
+    with cd(env.BLAST_DIR):
+        sudo("""wget --no-host-directories --cut-dirs=1 \
+              --directory-prefix=%(BLAST_DIR)s %(BLAST_URL)s""" % env)
+        sudo("tar xvfz %(BLAST_TAR_FILENAME)s" % env)
+    sudo("find %(BLAST_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+    sudo("ln -s %s/bin/* %s"
+         % (os.path.join(env.BLAST_DIR, env.BLAST_NAME), env.EXE_DIR))
 
 def _install_clustalw():
-    #build_dir = os.path.join(BUILD_DIR, "clustalw")
-    #result = run("mkdir -p %s" % build_dir)
-    #with cd(build_dir):
-    #    run("wget ftp://ftp.ebi.ac.uk/pub/software/clustalw2/2.0.10/clustalw-2.0.10-src.tar.gz")
-    #    run("tar xvfz clustalw-2.0.10-src.tar.gz")
-    #    with cd("clustalw-2.0.10"):
-    #        run("./configure")
-    #        run("make")
-    #        sudo("make install")
-    result = sudo("mkdir -p %s" % CLUSTALW_DIR)
-    result = sudo("chown ubuntu:ubuntu %s" % CLUSTALW_DIR)
-    with cd(CLUSTALW_DIR):
-        result = sudo(("wget --no-host-directories --cut-dirs=1 "
-                      + "--directory-prefix=%s %s")
-                      % (CLUSTALW_DIR, CLUSTALW_URL))
-        result = sudo("tar xvfz %s" % CLUSTALW_TAR_FILENAME)
-    result = sudo("find %s -type d -exec chmod -R 755 {} \;" % CLUSTALW_DIR)
-    result = sudo("ln -s %s/bin/clustalw %s"
-                  % (os.path.join(CLUSTALW_DIR, CLUSTALW_NAME), EXE_DIR))
+    sudo("mkdir -p %(CLUSTALW_DIR)s" % env)
+    sudo("chown ubuntu:ubuntu %(CLUSTALW_DIR)s" % env)
+    with cd(env.CLUSTALW_DIR):
+        sudo("""wget --no-host-directories --cut-dirs=1 \
+              --directory-prefix=%(CLUSTALW_DIR)s %(CLUSTALW_URL)s""" % env)
+        sudo("tar xvfz %(CLUSTALW_TAR_FILENAME)s" % env)
+    sudo("find %(CLUSTALW_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+    sudo("ln -s %s/bin/clustalw %s"
+         % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME), env.EXE_DIR))
 
 #def _install_build_tools():
-#    result = sudo("apt-get -y install gcc")
-#    result = sudo("apt-get -y install g++")
-#    result = sudo("apt-get -y install make")
+#    sudo("apt-get -y install gcc")
+#    sudo("apt-get -y install g++")
+#    sudo("apt-get -y install make")
 
 def _install_subversion():
-    result = sudo("apt-get -y install subversion")
+    sudo("apt-get -y install subversion")
 
+def _install_tools():
+    _create_tools_dir()
+    _install_blast()
+    _install_clustalw()
+    _install_subversion()
+
+#def _install_vigor():
+#    _create_vigor_dir()
+#    #_create_reference_db_dir()
+#    sudo("chown -R root:root %s" % env.TOOLS_DIR)
+#    sudo("find %s -type d -exec chmod -R 755 {} \;" % env.ROOT_DIR)
+#    with cd(env.VIGOR_DIR):
+#        #run("svn --username=tprindle checkout http://svn.jcvi.org/ANNOTATION/vigor/new .")
+#        run("svn --username=%s export %s ." % ( env.user, env.REPOS_URL))
+def _install_vigor():
+    _create_vigor_tempspace_dir()
+    _create_vigor_scratch_dir()
+    _install_vigor_sample_data()
+    if not _path_exists(env.VIGOR_REPOS_DIR):
+        run("svn --username=%(user)s export %(SVN_URL)s %(VIGOR_REPOS_DIR)s" % env)
+    run("find %(VIGOR_REPOS_DIR)s -type f -exec chmod -R ugo-w {} \;" % env)
+    run("find %(VIGOR_REPOS_DIR)s -type d -exec chmod -R 555 {} \;" % env)
+
+def _install_vigor_sample_data():
+    if not _path_exists(env.VIGOR_SAMPLE_DATA_DIR):
+        run("mkdir -p %(VIGOR_SAMPLE_DATA_DIR)s" % env)
+    if not _path_exists("%(VIGOR_SAMPLE_DATA_DIR)s/%(VIGOR_SAMPLE_DATA_TAR_FILENAME)s" % env):
+        run(("""wget --no-host-directories --cut-dirs=1 \
+            --directory-prefix=%(VIGOR_SAMPLE_DATA_DIR)s \
+             %(VIGOR_SAMPLE_DATA_URL)s""") % env)
+    with cd(env.VIGOR_SAMPLE_DATA_DIR):
+        run("tar xvfz %(VIGOR_SAMPLE_DATA_TAR_FILENAME)s" % env)
+    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type f -exec chmod -R ugo-w {} \;" % env)
+    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod -R 555 {} \;" % env)
+
+def _path_exists(path):
+    found = False
+    result = run("if [ -e %s ]; then echo 'true'; else echo 'false'; fi" % path)
+    if result == "true": found = True
+    return found
+
+def _remove_blast():
+    sudo("find %(EXE_DIR)s -lname %(BLAST_DIR)s -delete" % env)
+    _remove_blast_dir()
+
+def _remove_blast_dir():
+    if _path_exists(env.BLAST_DIR):
+        run("find %(BLAST_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(BLAST_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(BLAST_DIR)s" % env)
+
+def _remove_clustalw():
+    sudo("find %(EXE_DIR)s -lname %(CLUSTALW_DIR)s -delete" % env)
+    _remove_clustalw_dir()
+
+def _remove_clustalw_dir():
+    if _path_exists(env.CLUSTALW_DIR):
+        run("find %(CLUSTALW_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(CLUSTALW_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(CLUSTALW_DIR)s" % env)
+
+def _remove_tools():
+    _remove_blast()
+    _remove_clustalw()
+    _remove_tools_dir()
+
+def _remove_tools_dir():
+    if _path_exists(env.TOOLS_DIR):
+        run("find %(TOOLS_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(TOOLS_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(TOOLS_DIR)s" % env)
+
+def _remove_vigor():
+    _remove_vigor_repos_dir()
+    _remove_vigor_sample_data_dir()
+    _remove_vigor_tempspace_dir()
+    _remove_vigor_scratch_dir()
+
+def _remove_vigor_repos_dir():
+    if _path_exists(env.VIGOR_REPOS_DIR):
+        run("find %(VIGOR_REPOS_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(VIGOR_REPOS_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(VIGOR_REPOS_DIR)s" % env)
+
+def _remove_vigor_sample_data_dir():
+    if _path_exists(env.VIGOR_SAMPLE_DATA_DIR):
+        run("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(VIGOR_SAMPLE_DATA_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(VIGOR_SAMPLE_DATA_DIR)s" % env)
+
+def _remove_vigor_scratch_dir():
+    if _path_exists(env.VIGOR_SCRATCH_DIR):
+        run("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(VIGOR_SCRATCH_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(VIGOR_SCRATCH_DIR)s" % env)
+
+def _remove_vigor_tempspace_dir():
+    if _path_exists(env.VIGOR_TEMPSPACE_DIR):
+        run("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+        run("find %(VIGOR_TEMPSPACE_DIR)s -type f -exec chmod -R 644 {} \;" % env)
+        run("rm -rf %(VIGOR_TEMPSPACE_DIR)s" % env)
+
+# TODO - fix timezone
 def _set_timezone():
-    #result = sudo("dpkg-reconfigure tzdata")
+    #sudo("dpkg-reconfigure tzdata")
     pass
 
 def _update_aptget():
-    result = sudo("apt-get -y update")
+    sudo("apt-get -y update")
