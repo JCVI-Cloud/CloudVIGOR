@@ -3,6 +3,7 @@
 #
 
 #
+# TODO - create install_tool()
 # TODO - diff remote test output files to local test output files
 # TODO - finish run_tests
 # TODO - finish validate_tests
@@ -181,24 +182,24 @@ def _initialize_script():
     print("ROOT_DIR[%(ROOT_DIR)s]" % env)
     print("SCRATCH_DIR[%(SCRATCH_DIR)s]" % env)
     env.HOME = os.path.join("/home", env.REMOTE_LINUX_USER)
+    env.VIGOR_REPOS_DIR = os.path.join(env.ROOT_DIR, "VIGOR-REPOS")
+    env.VIGOR_REPOS_URL = "%(REPOS_URL)s/%(VIGOR_REPOS_TAG)s" % env
     env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor-scratch")
     env.VIGOR_TEMPSPACE_DIR = "/usr/local/scratch/VIRAL/VIGOR/tempspace"
-    env.VIGOR_REPOS_DIR = os.path.join(env.ROOT_DIR, "VIGOR-REPOS")
-    env.VIGOR_SAMPLE_DATA_URL = ("%(AMAZONS3_URL)/%(VIGOR_SAMPLE_DATA_TAR_FILENAME)s" % env)
     env.VIGOR_SAMPLE_DATA_DIR =  os.path.join(env.VIGOR_SCRATCH_DIR,
                                               "sample-data")
     env.VIGOR_TEST_OUTPUT_DIR =  os.path.join(env.VIGOR_SCRATCH_DIR,
                                               "test-output")
+    env.VIGOR_SAMPLE_DATA_URL = ("%(AMAZONS3_URL)/%(VIGOR_SAMPLE_DATA_TAR_FILENAME)s" % env)
     env.TOOLS_DIR = os.path.join(env.ROOT_DIR, "tools")
     env.BLAST_DIR = os.path.join(env.TOOLS_DIR, "blast")
     env.CLUSTALW_DIR = os.path.join(env.TOOLS_DIR, "clustalw")
-    #env.VIGOR_DIR = os.path.join(env.ROOT_DIR, "devel/ANNOTATION/VIRAL/VIGOR")
     env.EXE_DIR = "/usr/local/bin"
+    #env.VIGOR_DIR = os.path.join(env.ROOT_DIR, "devel/ANNOTATION/VIRAL/VIGOR")
     env.BLAST_TAR_FILENAME = "%(BLAST_NAME)s-x64-linux.tar.gz" % env
     env.BLAST_URL = ("%(AMAZONS3_URL)s/%(BLAST_TAR_FILENAME)s" % env)
     env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s.tgz" % env
     env.CLUSTALW_URL = ("%(AMAZONS3_URL)s/%(CLUSTALW_TAR_FILENAME)s" % env)
-    env.REPOS_URL = ("http://svn.jcvi.org/ANNOTATION/vigor/tags/%(VIGOR_REPOS_TAG)s" % env)
 
 def _install_blast():
     sudo("mkdir -p %(BLAST_DIR)s" % env)
@@ -219,7 +220,7 @@ def _install_clustalw():
               --directory-prefix=%(CLUSTALW_DIR)s %(CLUSTALW_URL)s""" % env)
         sudo("tar xvfz %(CLUSTALW_TAR_FILENAME)s" % env)
     sudo("find %(CLUSTALW_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-    sudo("ln -s %s/bin/clustalw %s"
+    sudo("ln -s %s/bin/* %s"
          % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME), env.EXE_DIR))
 
 #def _install_build_tools():
@@ -243,13 +244,13 @@ def _install_tools():
 #    sudo("find %s -type d -exec chmod -R 755 {} \;" % env.ROOT_DIR)
 #    with cd(env.VIGOR_DIR):
 #        #run("svn --username=tprindle checkout http://svn.jcvi.org/ANNOTATION/vigor/new .")
-#        run("svn --username=%s export %s ." % ( env.user, env.REPOS_URL))
+#        run("svn --username=%s export %s ." % ( env.user, env.VIGOR_REPOS_URL))
 def _install_vigor():
     _create_vigor_tempspace_dir()
     _create_vigor_scratch_dir()
     _install_vigor_sample_data()
     if not _path_exists(env.VIGOR_REPOS_DIR):
-        run("svn --username=%(user)s export %(SVN_URL)s %(VIGOR_REPOS_DIR)s" % env)
+        run("svn --username=%(user)s export %(VIGOR_REPOS_URL)s %(VIGOR_REPOS_DIR)s" % env)
     run("find %(VIGOR_REPOS_DIR)s -type f -exec chmod -R ugo-w {} \;" % env)
     run("find %(VIGOR_REPOS_DIR)s -type d -exec chmod -R 555 {} \;" % env)
 
@@ -271,66 +272,44 @@ def _path_exists(path):
     if result == "true": found = True
     return found
 
-def _remove_blast():
-    sudo("find %(EXE_DIR)s -lname %(BLAST_DIR)s -delete" % env)
-    _remove_blast_dir()
+def _path_is_dir(path):
+    found = False
+    result = run("if [ -d %s ]; then echo 'true'; else echo 'false'; fi" % path)
+    if result == "true": found = True
+    return found
 
-def _remove_blast_dir():
-    if _path_exists(env.BLAST_DIR):
-        run("find %(BLAST_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(BLAST_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(BLAST_DIR)s" % env)
+def _remove_blast():
+    #sudo("find %(EXE_DIR)s -lname %(BLAST_DIR)s -delete" % env)
+    _remove_symlinks(env.BLAST_DIR, env.EXE_DIR)
+    _remove_dir(env.BLAST_DIR)
 
 def _remove_clustalw():
-    sudo("find %(EXE_DIR)s -lname %(CLUSTALW_DIR)s -delete" % env)
-    _remove_clustalw_dir()
+    #sudo("find %(EXE_DIR)s -lname %(CLUSTALW_DIR)s -delete" % env)
+    _remove_symlinks(env.CLUSTALW_DIR, env.EXE_DIR)
+    _remove_dir(env.CLUSTALW_DIR)
 
-def _remove_clustalw_dir():
-    if _path_exists(env.CLUSTALW_DIR):
-        run("find %(CLUSTALW_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(CLUSTALW_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(CLUSTALW_DIR)s" % env)
+def _remove_dir(dirspec):
+    if _path_is_dir(dirspec):
+        run("find %s -type d -exec chmod -R 755 {} \;" % dirspec)
+        run("find %s -type f -exec chmod -R 644 {} \;" % dirspec)
+        run("rm -rf %s" % dirspec)
+
+def _remove_symlinks(link_from_dir, link_to_dir):
+    if _path_is_dir(link_from_dir) and _path_is_dir(link_to_dir):
+        sudo("find %s -lname %s -delete" % (link_to_dir,link_from_dir))
 
 def _remove_tools():
     _remove_blast()
     _remove_clustalw()
-    _remove_tools_dir()
-
-def _remove_tools_dir():
-    if _path_exists(env.TOOLS_DIR):
-        run("find %(TOOLS_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(TOOLS_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(TOOLS_DIR)s" % env)
+    _remove_dir(env.TOOLS_DIR)
 
 def _remove_vigor():
-    _remove_vigor_repos_dir()
-    _remove_vigor_sample_data_dir()
-    _remove_vigor_tempspace_dir()
-    _remove_vigor_scratch_dir()
+    _remove_dir(env.VIGOR_REPOS_DIR)
+    _remove_dir(env.VIGOR_SAMPLE_DATA_DIR)
+    _remove_dir(env.VIGOR_TEMPSPACE_DIR)
+    _remove_dir(env.VIGOR_SCRATCH_DIR)
 
-def _remove_vigor_repos_dir():
-    if _path_exists(env.VIGOR_REPOS_DIR):
-        run("find %(VIGOR_REPOS_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(VIGOR_REPOS_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(VIGOR_REPOS_DIR)s" % env)
-
-def _remove_vigor_sample_data_dir():
-    if _path_exists(env.VIGOR_SAMPLE_DATA_DIR):
-        run("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(VIGOR_SAMPLE_DATA_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(VIGOR_SAMPLE_DATA_DIR)s" % env)
-
-def _remove_vigor_scratch_dir():
-    if _path_exists(env.VIGOR_SCRATCH_DIR):
-        run("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(VIGOR_SCRATCH_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(VIGOR_SCRATCH_DIR)s" % env)
-
-def _remove_vigor_tempspace_dir():
-    if _path_exists(env.VIGOR_TEMPSPACE_DIR):
-        run("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod -R 755 {} \;" % env)
-        run("find %(VIGOR_TEMPSPACE_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-        run("rm -rf %(VIGOR_TEMPSPACE_DIR)s" % env)
+# TODO - create install_tool()
 
 # TODO - fix timezone
 def _set_timezone():
