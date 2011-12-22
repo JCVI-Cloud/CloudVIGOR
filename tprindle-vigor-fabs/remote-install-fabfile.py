@@ -196,7 +196,7 @@ def _initialize_script():
     env.CLUSTALW_DIR = os.path.join(env.TOOLS_DIR, "clustalw")
     env.EXE_DIR = "/usr/local/bin"
     env.BLAST_TAR_FILENAME = "%(BLAST_NAME)s-x64-linux.tar.gz" % env
-    env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s.tgz" % env
+    env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s.tar.gz" % env
 
 def _install_blast():
     _create_tools_dir()
@@ -212,8 +212,7 @@ def _install_clustalw():
                      env.CLUSTALW_DIR)
     if not _path_exists(os.path.join(env.EXE_DIR, "clustalw*")):
         sudo("ln -s %s %s"
-             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "bin", "*"),
-                env.EXE_DIR))
+             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"), env.EXE_DIR + "/clustalw"))
 
 def _install_tarfile(download_url, tar_filename, install_dir):
     if not _path_is_dir(install_dir):
