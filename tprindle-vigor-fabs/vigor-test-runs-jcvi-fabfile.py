@@ -123,7 +123,7 @@ def _initialize():
     env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor-scratch")
     env.VIGOR_SAMPLE_DATA_TAR_FILENAME = "vigor-sample-data.tgz"
     env.VIGOR_TEMPSPACE_DIR = "/usr/local/scratch/VIRAL/VIGOR/tempspace"
-    env.VIGOR_REPOS_DIR = os.path.join(env.ROOT_DIR, "VIGOR-REPOS")
+    env.VIGOR_REPOS_DIR = os.path.join(env.ROOT_DIR, "VIGOR-RUNTIME")
     env.SVN_URL = ("http://svn.jcvi.org/ANNOTATION/vigor/tags/%s"
                    % env.VIGOR_SVN_TAG)
     env.VIGOR_SAMPLE_DATA_URL = ("https://s3.amazonaws.com/VIGOR/%s"
