@@ -250,16 +250,22 @@ def _install_vigor_sample_data():
 
 def _path_exists(path):
     found = False
-    result = sudo("if [ -e %s ]; then echo 'true'; else echo 'false'; fi"
-                  % path)
-    if result == "true": found = True
+    #result = sudo("if [ -e %s ]; then echo 'true'; else echo 'false'; fi"
+    #              % path)
+    #if result == "true": found = True
+    #return found
+    result = run("test -e '%s' || echo 'FALSE'" % path)
+    if result != "FALSE": found = True
     return found
 
 def _path_is_dir(path):
     found = False
-    result = sudo("if [ -d %s ]; then echo 'true'; else echo 'false'; fi"
-                  % path)
-    if result == "true": found = True
+    #result = sudo("if [ -d %s ]; then echo 'true'; else echo 'false'; fi"
+    #              % path)
+    #if result == "true": found = True
+    #return found
+    result = run("test -d '%s' || echo 'FALSE'" % path)
+    if result != "FALSE": found = True
     return found
 
 def _remove_blast():
@@ -294,4 +300,3 @@ def _remove_vigor():
     _remove_dir(env.VIGOR_TEST_OUTPUT_DIR)
     _remove_dir(env.VIGOR_VALIDATION_TEST_DATA_DIR)
     _remove_dir(env.VIGOR_SCRATCH_DIR)
-
