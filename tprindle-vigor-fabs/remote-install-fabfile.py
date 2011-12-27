@@ -54,13 +54,13 @@ def run_tests():
     try:
         _initialize_script()
 
-        #cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
-        #        -l %(VIGOR_RUNTIME_DIR)s/Adenovirus.pm \
-        #        -x %(VIGOR_RUNTIME_DIR)s/conf/hadv_FJ349096.cfg \
-        #        -i %(VIGOR_SAMPLE_DATA_DIR)s/Adenovirus/34615.fasta \
-        #        -O %(VIGOR_TEST_OUTPUT_DIR)s/34615""") % env
-        #print "DEBUG: cmd[%s]" % cmd
-        #run(cmd)
+        cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -l %(VIGOR_RUNTIME_DIR)s/Adenovirus.pm \
+                -x %(VIGOR_RUNTIME_DIR)s/conf/hadv_FJ349096.cfg \
+                -i %(VIGOR_SAMPLE_DATA_DIR)s/Adenovirus/34615.fasta \
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/34615""") % env
+        print "DEBUG: cmd[%s]" % cmd
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
@@ -183,8 +183,9 @@ def _initialize_script():
     env.HOME = os.path.join("/home", env.user)
     env.TOOLS_DIR = os.path.join(env.ROOT_DIR, "tools")
     env.VIGOR_RUNTIME_DIR = os.path.join(env.TOOLS_DIR, "vigor")
-    env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor-scratch")
-    env.VIGOR_TEMPSPACE_DIR = "/usr/local/scratch/VIRAL/VIGOR/tempspace"
+    env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor")
+    #env.VIGOR_TEMPSPACE_DIR = "/usr/local/scratch/VIRAL/VIGOR/tempspace"
+    env.VIGOR_TEMPSPACE_DIR = os.path.join(env.VIGOR_SCRATCH_DIR, "tempspace")
     env.VIGOR_SAMPLE_DATA_DIR = os.path.join(env.VIGOR_SCRATCH_DIR,
                                               "sample-data")
     env.VIGOR_TAR_FILENAME = "%(VIGOR_NAME)s.tgz" % env
@@ -212,7 +213,11 @@ def _install_clustalw():
                      env.CLUSTALW_DIR)
     if not _path_exists(os.path.join(env.EXE_DIR, "clustalw*")):
         sudo("ln -s %s %s"
-             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"), env.EXE_DIR + "/clustalw"))
+             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"),
+                env.EXE_DIR))
+        sudo("ln -s %s %s"
+             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"),
+                os.path.join(env.EXE_DIR, "/clustalw")))
 
 def _install_tarfile(download_url, tar_filename, install_dir):
     if not _path_is_dir(install_dir):
