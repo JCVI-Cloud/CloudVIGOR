@@ -8,6 +8,7 @@
 #
 
 import os.path
+import re
 from fabric.api import cd, env, local, put, run, sudo, task
 from fabric.network import disconnect_all
 
@@ -195,8 +196,8 @@ def _initialize_script():
     env.BLAST_DIR = os.path.join(env.TOOLS_DIR, "blast")
     env.CLUSTALW_DIR = os.path.join(env.TOOLS_DIR, "clustalw")
     env.EXE_DIR = "/usr/local/bin"
-    env.BLAST_TAR_FILENAME = "%(BLAST_NAME)s-x64-linux.tar.gz" % env
-    env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s.tar.gz" % env
+    env.BLAST_TAR_FILENAME = "%(BLAST_NAME)s-%(BLAST_ARCH)s.tar.gz" % env
+    env.CLUSTALW_TAR_FILENAME = "%(CLUSTALW_NAME)s-%(CLUSTALW_ARCH)s.tar.gz" % env
 
 def _install_blast():
     _create_tools_dir()
@@ -211,8 +212,10 @@ def _install_clustalw():
     _install_tarfile(env.AMAZONS3_URL, env.CLUSTALW_TAR_FILENAME,
                      env.CLUSTALW_DIR)
     if not _path_exists(os.path.join(env.EXE_DIR, "clustalw*")):
-        sudo("ln -s %s %s"
-             % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"), env.EXE_DIR + "/clustalw"))
+        if re.search("64", env.CLUSTALW_ARCH):
+           sudo("ln -s %s %s" % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"), env.EXE_DIR + "/clustalw"))
+        else:
+           sudo("ln -s %s %s" % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "bin", "*"), env.EXE_DIR))
 
 def _install_tarfile(download_url, tar_filename, install_dir):
     if not _path_is_dir(install_dir):
