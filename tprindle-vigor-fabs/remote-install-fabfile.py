@@ -46,6 +46,8 @@ def help():
 
         validate_tests  - Compares the test output from these tests to a
                             curated copy of the test output.
+
+        help            - This text.
         \n"""
 
 # TODO - test run_tests

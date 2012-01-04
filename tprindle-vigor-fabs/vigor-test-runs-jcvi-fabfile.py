@@ -32,11 +32,13 @@ def clean_all():
 def help():
     print """
     Targets:
-        install   - Creates appropriate resources and installs VIGOR pipeline.
+        install     - Creates appropriate resources and installs VIGOR pipeline.
 
-        clean_all - Removes this VIGOR installation and all related resources.
+        clean_all   - Removes this VIGOR installation and all related resources.
 
-        run_tests - Runs tests using the VIGOR pipeline and sample data.
+        run_tests   - Runs tests using the VIGOR pipeline and sample data.
+
+        help        - This text.
         \n"""
 
 @task
