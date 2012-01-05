@@ -3,13 +3,11 @@
 #
 
 #
-# TODO - test run_tests
 # TODO - test validate_tests
 #
 
-import os.path
-import re
-from fabric.api import cd, env, local, put, run, sudo, task
+import os.path, re
+from fabric.api import cd, env, hide, local, run, settings, sudo, task
 from fabric.network import disconnect_all
 
 @task
@@ -51,65 +49,88 @@ def help():
         help            - This text.
         \n"""
 
-# TODO - test run_tests
 @task
 def run_tests():
     try:
         _initialize_script()
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Adenovirus.pm \
                 -x %(VIGOR_RUNTIME_DIR)s/conf/hadv_FJ349096.cfg \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Adenovirus/34615.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/34615""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/34615 \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/34615.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_35931.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931 \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32276.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276 \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32265.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265 \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Flu.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Flu/FluB.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/FluB""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/FluB \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/FluB.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Rhinovirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Rhinovirus/Rhinovirus_genomes.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -l %(VIGOR_RUNTIME_DIR)s/Rotavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Rotavirus/rotaV_10_22_genome.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
+                -v 1 \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/YellowFeverV/YFV_genome.fasta \
-                -O %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome""") % env
+                -O %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome \
+                > %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome.log 2>&1 \
+                """) % env
         print "DEBUG: cmd[%s]" % cmd
         run(cmd)
 
@@ -155,12 +176,6 @@ def _create_vigor_tempspace_dir():
     sudo("chown -R %(user)s:%(user)s %(VIGOR_TEMPSPACE_DIR)s" % env)
     sudo("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod -R 777 {} \;" % env)
 
-def _file_contains(filespec, phrase):
-    found = False
-    result = sudo("grep '%s' %s" % (phrase, filespec))
-    if length(result) > 0: found = True
-    return found
-
 def _fix_etc_hosts():
     internal_ip = sudo("hostname")
     print("internal_ip[%s]" % internal_ip)
@@ -184,6 +199,7 @@ def _initialize_script():
     print("VIGOR_SAMPLE_DATA_TAR_FILENAME[%(VIGOR_SAMPLE_DATA_TAR_FILENAME)s]"
           % env)
     env.HOME = os.path.join("/home", env.user)
+
     env.TOOLS_DIR = os.path.join(env.ROOT_DIR, "tools")
     env.VIGOR_RUNTIME_DIR = os.path.join(env.TOOLS_DIR, "vigor")
     env.VIGOR_SCRATCH_DIR = os.path.join(env.SCRATCH_DIR, "vigor")
@@ -224,18 +240,6 @@ def _install_clustalw():
                 % (os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "clustalw2"),
                    os.path.join(env.EXE_DIR, "clustalw")))
 
-def _install_tarfile(download_url, tar_filename, install_dir):
-    if not _path_is_dir(install_dir):
-        sudo("mkdir -p %s" % install_dir)
-    with cd(install_dir):
-        if not _path_exists(os.path.join(install_dir, tar_filename)):
-            sudo("""wget --no-host-directories --cut-dirs=1 \
-                 --directory-prefix=%s %s/%s"""
-                % (install_dir, download_url, tar_filename))
-            sudo("tar xvfz %s" % tar_filename)
-    sudo("chown -R %s:%s %s" % (env.user, env.user, install_dir))
-    sudo("find %s -type d -exec chmod -R 755 {} \;" % install_dir)
-
 def _install_tools():
     _create_tools_dir()
     _install_blast()
@@ -258,18 +262,6 @@ def _install_vigor_sample_data():
     sudo("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod -R 555 {} \;"
          % env)
 
-def _path_exists(path):
-    found = False
-    result = run("test -e '%s' || echo 'FALSE'" % path)
-    if result != "FALSE": found = True
-    return found
-
-def _path_is_dir(path):
-    found = False
-    result = run("test -d '%s' || echo 'FALSE'" % path)
-    if result != "FALSE": found = True
-    return found
-
 def _remove_blast():
     _remove_symlinks(os.path.join(env.BLAST_DIR, env.BLAST_NAME, "bin", "*"),
                      env.EXE_DIR)
@@ -279,16 +271,6 @@ def _remove_clustalw():
     _remove_symlinks(os.path.join(env.CLUSTALW_DIR, env.CLUSTALW_NAME, "bin", "*"),
                      env.EXE_DIR)
     _remove_dir(env.CLUSTALW_DIR)
-
-def _remove_dir(dirspec):
-    if _path_is_dir(dirspec):
-        sudo("find %s -type d -exec chmod -R 755 {} \;" % dirspec)
-        sudo("find %s -type f -exec chmod -R 644 {} \;" % dirspec)
-        sudo("rm -rf %s" % dirspec)
-
-def _remove_symlinks(link_from_filespec, link_to_dir):
-    if _path_is_dir(link_to_dir):
-        sudo("find %s -lname '%s' -delete" % (link_to_dir, link_from_filespec))
 
 def _remove_tools():
     _remove_blast()
@@ -302,3 +284,46 @@ def _remove_vigor():
     _remove_dir(env.VIGOR_TEST_OUTPUT_DIR)
     _remove_dir(env.VIGOR_VALIDATION_TEST_DATA_DIR)
     _remove_dir(env.VIGOR_SCRATCH_DIR)
+
+# Utility methods.
+
+def _install_tarfile(download_url, tar_filename, install_dir):
+    if not _path_is_dir(install_dir):
+        sudo("mkdir -p %s" % install_dir)
+    with cd(install_dir):
+        if not _path_exists(os.path.join(install_dir, tar_filename)):
+            sudo("""wget --no-host-directories --cut-dirs=1 \
+                 --directory-prefix=%s %s/%s"""
+                % (install_dir, download_url, tar_filename))
+            sudo("tar xvfz %s" % tar_filename)
+    sudo("chown -R %s:%s %s" % (env.user, env.user, install_dir))
+    sudo("find %s -type d -exec chmod -R 755 {} \;" % install_dir)
+
+def _path_exists(path):
+    found = False
+    with settings(hide("running","stdout")):
+        result = sudo("test -e '%s' || echo 'FALSE'" % path)
+    if result != "FALSE": found = True
+    return found
+
+def _path_is_dir(path):
+    found = False
+    with settings(hide("running","stdout")):
+        result = sudo("test -d '%s' || echo 'FALSE'" % path)
+    if result != "FALSE": found = True
+    return found
+
+def _remove_dir(dirspec):
+    if _path_is_dir(dirspec):
+        _unlock_dir(dirspec)
+        sudo("rm -rf %s" % dirspec)
+
+def _remove_symlinks(link_from_filespec, link_to_dir):
+    if _path_is_dir(link_to_dir):
+        sudo("find %s -lname '%s' -delete" % (link_to_dir, link_from_filespec))
+
+def _unlock_dir(dirspec):
+    with settings(hide("running","stdout")):
+        sudo("find %s -type d -exec chmod -R 755 {} \;" % dirspec)
+        sudo("find %s -type d -exec chmod -R g+s {} \;" % dirspec)
+        sudo("find %s -type f -exec chmod -R 644 {} \;" % dirspec)
