@@ -27,7 +27,7 @@ def clean_all():
 
 @task(default=True)
 def help():
-    print """
+    print("""
     Targets:
         install     - Creates appropriate resources and installs VIGOR pipeline.
 
@@ -36,7 +36,7 @@ def help():
         run_tests   - Runs tests using the VIGOR pipeline and sample data.
 
         help        - This text.
-        \n"""
+        \n""")
 
 @task
 def run_tests():
@@ -49,9 +49,9 @@ def run_tests():
                 -x %(VIGOR_RUNTIME_DIR)s/conf/hadv_FJ349096.cfg \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Adenovirus/34615.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/34615 \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/34615.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/34615.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -59,9 +59,9 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_35931.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931 \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_35931.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/GCV_35931.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -69,9 +69,9 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32276.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276 \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32276.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/GCV_32276.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -79,9 +79,9 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Coronavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Coronavirus/GCV_32265.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265 \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/GCV_32265.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/GCV_32265.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -89,9 +89,9 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Flu.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Flu/FluB.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/FluB \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/FluB.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/FluB.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -99,9 +99,9 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Rhinovirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Rhinovirus/Rhinovirus_genomes.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/Rhinovirus_genomes.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/Rhinovirus_genomes.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
@@ -109,18 +109,18 @@ def run_tests():
                 -l %(VIGOR_RUNTIME_DIR)s/Rotavirus.pm \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/Rotavirus/rotaV_10_22_genome.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/rotaV_10_22_genome.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/rotaV_10_22_genome.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
                 -i %(VIGOR_SAMPLE_DATA_DIR)s/YellowFeverV/YFV_genome.fasta \
                 -O %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome \
-                > %(VIGOR_TEST_OUTPUT_DIR)s/YFV_genome.log 2>&1 \
+                > %(VIGOR_SCRATCH_DIR)s/YFV_genome.log 2>&1 \
                 """) % env
-        print "DEBUG: cmd[%s]" % cmd
+        print("DEBUG: cmd[%s]" % cmd)
         run(cmd)
 
     finally:
@@ -136,14 +136,14 @@ def _create_vigor_scratch_dir():
         run("mkdir -p %(VIGOR_SCRATCH_DIR)s" % env)
     if not _path_is_dir(env.VIGOR_TEST_OUTPUT_DIR):
         run("mkdir -p %(VIGOR_TEST_OUTPUT_DIR)s" % env)
-    run("find %(VIGOR_SCRATCH_DIR)s -type f -exec chmod -R 644 {} \;" % env)
-    run("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+    run("find %(VIGOR_SCRATCH_DIR)s -type f -exec chmod 644 {} \;" % env)
+    run("find %(VIGOR_SCRATCH_DIR)s -type d -exec chmod 755 {} \;" % env)
 
 def _create_vigor_tempspace_dir():
     if not _path_is_dir(env.VIGOR_TEMPSPACE_DIR):
         run("mkdir -p %(VIGOR_TEMPSPACE_DIR)s" % env)
     #run("chown -R %(user)s:%(user)s %(VIGOR_TEMPSPACE_DIR)s" % env)
-    run("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod -R 755 {} \;" % env)
+    run("find %(VIGOR_TEMPSPACE_DIR)s -type d -exec chmod 755 {} \;" % env)
 
 def _initialize_script():
     print("user[%(user)s]" % env)
@@ -170,47 +170,33 @@ def _initialize_script():
                                                       "validate-test-data")
 
 def _install_tools():
+    print("Install tools...")
     _create_tools_dir()
 
 def _install_vigor():
+    print("Installing VIGOR...")
     _create_vigor_tempspace_dir()
     _create_vigor_scratch_dir()
     _install_vigor_sample_data()
     _install_tarfile(env.AMAZONS3_URL, env.VIGOR_TAR_FILENAME,
                      env.VIGOR_RUNTIME_DIR)
+    run("chmod 755 %s" % os.path.join(env.VIGOR_RUNTIME_DIR, "*.pl"))
 
 def _install_vigor_sample_data():
+    print("    Installing VIGOR sample data...")
     _install_tarfile(env.AMAZONS3_URL, env.VIGOR_SAMPLE_DATA_TAR_FILENAME,
                  env.VIGOR_SAMPLE_DATA_DIR)
-    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type f -exec chmod -R ugo-w {} \;"
+    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type f -exec chmod ugo-w {} \;"
          % env)
-    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod -R 555 {} \;"
+    run("find %(VIGOR_SAMPLE_DATA_DIR)s -type d -exec chmod 555 {} \;"
          % env)
-
-def _path_exists(path):
-    found = False
-    with settings(hide("running","stdout")):
-        result = run("test -e '%s' || echo 'FALSE'" % path)
-    if result != "FALSE": found = True
-    return found
-
-def _path_is_dir(path):
-    found = False
-    with settings(hide("running","stdout")):
-        result = run("test -d '%s' || echo 'FALSE'" % path)
-    if result != "FALSE": found = True
-    return found
-
-def _remove_dir(dirspec):
-    if _path_is_dir(dirspec):
-        run("find %s -type d -exec chmod -R 755 {} \;" % dirspec)
-        run("find %s -type f -exec chmod -R 644 {} \;" % dirspec)
-        run("rm -rf %s" % dirspec)
 
 def _remove_tools():
+    print("Removing tools...")
     _remove_dir(env.TOOLS_DIR)
 
 def _remove_vigor():
+    print("Removing VIGOR...")
     _remove_dir(env.VIGOR_RUNTIME_DIR)
     _remove_dir(env.VIGOR_SAMPLE_DATA_DIR)
     _remove_dir(env.VIGOR_TEMPSPACE_DIR)
@@ -230,7 +216,7 @@ def _install_tarfile(download_url, tar_filename, install_dir):
                 % (install_dir, download_url, tar_filename))
             run("tar xvfz %s" % tar_filename)
     #run("chown -R %s:%s %s" % (env.user, env.user, install_dir))
-    run("find %s -type d -exec chmod -R 755 {} \;" % install_dir)
+    run("find %s -type d -exec chmod 755 {} \;" % install_dir)
 
 def _path_exists(path):
     found = False
@@ -257,6 +243,6 @@ def _remove_symlinks(link_from_filespec, link_to_dir):
 
 def _unlock_dir(dirspec):
     with settings(hide("running","stdout")):
-        run("find %s -type d -exec chmod -R 755 {} \;" % dirspec)
-        run("find %s -type d -exec chmod -R g+s {} \;" % dirspec)
-        run("find %s -type f -exec chmod -R 644 {} \;" % dirspec)
+        run("find %s -type d -exec chmod 755 {} \;" % dirspec)
+        run("find %s -type d -exec chmod g+s {} \;" % dirspec)
+        run("find %s -type f -exec chmod 644 {} \;" % dirspec)
