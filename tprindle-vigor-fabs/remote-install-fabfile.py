@@ -285,7 +285,7 @@ def _remove_clustalw():
 def _remove_tools():
     print("Removing tools...")
     _remove_blast()
-    _remove_clustalw()
+    #_remove_clustalw()
     _remove_dir(env.TOOLS_DIR)
 
 def _remove_vigor():
