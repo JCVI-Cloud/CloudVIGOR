@@ -80,7 +80,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/GCV_32276.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -90,7 +90,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/GCV_32265.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -100,7 +100,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/FluB.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -110,7 +110,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/Rhinovirus_genomes.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -120,7 +120,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/rotaV_10_22_genome.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -129,7 +129,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/YFV_genome.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
     finally:
         disconnect_all()
@@ -139,7 +139,7 @@ def validate_tests():
     print("here0")
     try:
         _initialize_script()
-        _install_tarfile(env.AMAZONS3_URL, "vigor-test-output.tgz",
+        _install_tarfile(env.AMAZONS3_URL, "vigor-20111129code-test-output-prindle.tar.gz",
                          env.VIGOR_VALIDATION_TEST_DATA_DIR)
         with settings(hide("running","stdout")):
             results = run("""diff -qr %(VIGOR_VALIDATION_TEST_DATA_DIR)s \

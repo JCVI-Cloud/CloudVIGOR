@@ -62,7 +62,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/GCV_35931.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -72,7 +72,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/GCV_32276.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -82,7 +82,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/GCV_32265.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -92,7 +92,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/FluB.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -102,7 +102,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/Rhinovirus_genomes.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -112,7 +112,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/rotaV_10_22_genome.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
         cmd = ("""%(VIGOR_RUNTIME_DIR)s/VIGOR.pl \
                 -v 1 \
@@ -121,7 +121,7 @@ def run_tests():
                 > %(VIGOR_SCRATCH_DIR)s/YFV_genome.log 2>&1 \
                 """) % env
         print("DEBUG: cmd[%s]" % cmd)
-        #run(cmd)
+        run(cmd)
 
     finally:
         disconnect_all()
