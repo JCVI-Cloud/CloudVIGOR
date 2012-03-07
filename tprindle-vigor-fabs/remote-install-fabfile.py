@@ -139,7 +139,7 @@ def validate_tests():
     print("here0")
     try:
         _initialize_script()
-        _install_tarfile(env.AMAZONS3_URL, "vigor-20111129code-test-output-prindle.tar.gz",
+        _install_tarfile(env.AMAZONS3_URL, "vigor-20111129code-test-output-lserver.tgz",
                          env.VIGOR_VALIDATION_TEST_DATA_DIR)
         with settings(hide("running","stdout")):
             results = run("""diff -qr %(VIGOR_VALIDATION_TEST_DATA_DIR)s \
